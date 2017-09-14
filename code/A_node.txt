@@ -1,0 +1,225 @@
+Node	 29 	Police	 15 	Distance	 57.005 
+
+Node	 28 	Police	 15 	Distance	 47.518 
+
+Node	 61 	Police	 7 	Distance	 41.902 
+
+Node	 39 	Police	 2 	Distance	 36.822 
+
+Node	 92 	Police	 20 	Distance	 36.013 
+
+Node	 38 	Police	 16 	Distance	 34.059 
+
+Node	 21 	Police	 13 	Distance	 27.083 
+
+Node	 24 	Police	 13 	Distance	 23.854 
+
+Node	 58 	Police	 5 	Distance	 23.019 
+
+Node	 54 	Police	 3 	Distance	 22.709 
+
+Node	 56 	Police	 5 	Distance	 20.837 
+
+Node	 31 	Police	 9 	Distance	 20.557 
+
+Node	 64 	Police	 4 	Distance	 19.363 
+
+Node	 40 	Police	 2 	Distance	 19.144 
+
+Node	 57 	Police	 4 	Distance	 18.682 
+
+Node	 66 	Police	 3 	Distance	 18.402 
+
+Node	 25 	Police	 12 	Distance	 17.889 
+
+Node	 60 	Police	 4 	Distance	 17.392 
+
+Node	 52 	Police	 5 	Distance	 16.594 
+
+Node	 27 	Police	 11 	Distance	 16.433 
+
+Node	 67 	Police	 1 	Distance	 16.194 
+
+Node	 72 	Police	 2 	Distance	 16.062 
+
+Node	 91 	Police	 20 	Distance	 15.988 
+
+Node	 65 	Police	 3 	Distance	 15.240 
+
+Node	 59 	Police	 5 	Distance	 15.209 
+
+Node	 87 	Police	 20 	Distance	 14.651 
+
+Node	 90 	Police	 20 	Distance	 13.022 
+
+Node	 88 	Police	 20 	Distance	 12.946 
+
+Node	 48 	Police	 7 	Distance	 12.902 
+
+Node	 76 	Police	 1 	Distance	 12.836 
+
+Node	 47 	Police	 7 	Distance	 12.806 
+
+Node	 55 	Police	 3 	Distance	 12.659 
+
+Node	 51 	Police	 5 	Distance	 12.293 
+
+Node	 68 	Police	 1 	Distance	 12.071 
+
+Node	 84 	Police	 20 	Distance	 11.752 
+
+Node	 53 	Police	 5 	Distance	 11.708 
+
+Node	 71 	Police	 1 	Distance	 11.403 
+
+Node	 32 	Police	 7 	Distance	 11.402 
+
+Node	 37 	Police	 16 	Distance	 11.182 
+
+Node	 45 	Police	 9 	Distance	 10.951 
+
+Node	 82 	Police	 18 	Distance	 10.793 
+
+Node	 63 	Police	 4 	Distance	 10.308 
+
+Node	 73 	Police	 1 	Distance	 10.296 
+
+Node	 42 	Police	 17 	Distance	 9.849 
+
+Node	 77 	Police	 19 	Distance	 9.849 
+
+Node	 44 	Police	 2 	Distance	 9.487 
+
+Node	 89 	Police	 20 	Distance	 9.487 
+
+Node	 46 	Police	 8 	Distance	 9.301 
+
+Node	 75 	Police	 1 	Distance	 9.301 
+
+Node	 22 	Police	 13 	Distance	 9.055 
+
+Node	 26 	Police	 11 	Distance	 9.000 
+
+Node	 70 	Police	 2 	Distance	 8.602 
+
+Node	 41 	Police	 17 	Distance	 8.500 
+
+Node	 50 	Police	 5 	Distance	 8.485 
+
+Node	 33 	Police	 8 	Distance	 8.276 
+
+Node	 80 	Police	 18 	Distance	 8.062 
+
+Node	 43 	Police	 2 	Distance	 8.000 
+
+Node	 81 	Police	 18 	Distance	 6.708 
+
+Node	 78 	Police	 1 	Distance	 6.403 
+
+Node	 74 	Police	 1 	Distance	 6.265 
+
+Node	 36 	Police	 16 	Distance	 6.083 
+
+Node	 30 	Police	 7 	Distance	 5.831 
+
+Node	 83 	Police	 18 	Distance	 5.385 
+
+Node	 34 	Police	 9 	Distance	 5.025 
+
+Node	 23 	Police	 13 	Distance	 5.000 
+
+Node	 49 	Police	 5 	Distance	 5.000 
+
+Node	 69 	Police	 1 	Distance	 5.000 
+
+Node	 79 	Police	 19 	Distance	 4.472 
+
+Node	 85 	Police	 20 	Distance	 4.472 
+
+Node	 35 	Police	 9 	Distance	 4.243 
+
+Node	 86 	Police	 20 	Distance	 3.606 
+
+Node	 62 	Police	 4 	Distance	 3.500 
+
+Node	 1 	Police	 1 	Distance	 0.000 
+
+Node	 11 	Police	 11 	Distance	 0.000 
+
+Node	 12 	Police	 12 	Distance	 0.000 
+
+Node	 13 	Police	 13 	Distance	 0.000 
+
+Node	 14 	Police	 14 	Distance	 0.000 
+
+Node	 15 	Police	 15 	Distance	 0.000 
+
+Node	 16 	Police	 16 	Distance	 0.000 
+
+Node	 17 	Police	 17 	Distance	 0.000 
+
+Node	 18 	Police	 18 	Distance	 0.000 
+
+Node	 19 	Police	 19 	Distance	 0.000 
+
+Node	 20 	Police	 20 	Distance	 0.000 
+
+Node	 2 	Police	 2 	Distance	 0.000 
+
+Node	 3 	Police	 3 	Distance	 0.000 
+
+Node	 4 	Police	 4 	Distance	 0.000 
+
+Node	 5 	Police	 5 	Distance	 0.000 
+
+Node	 6 	Police	 6 	Distance	 0.000 
+
+Node	 7 	Police	 7 	Distance	 0.000 
+
+Node	 8 	Police	 8 	Distance	 0.000 
+
+Node	 9 	Police	 9 	Distance	 0.000 
+
+Node	 10 	Police	 10 	Distance	 0.000 
+
+Police	 20 	Diff	 +5.275 	Ave	 6.225 
+
+Police	 1 	Diff	 +4.075 	Ave	 6.225 
+
+Police	 2 	Diff	 +3.475 	Ave	 6.225 
+
+Police	 5 	Diff	 +3.475 	Ave	 6.225 
+
+Police	 7 	Diff	 +3.375 	Ave	 6.225 
+
+Police	 13 	Diff	 +2.275 	Ave	 6.225 
+
+Police	 9 	Diff	 +1.975 	Ave	 6.225 
+
+Police	 4 	Diff	 +0.375 	Ave	 6.225 
+
+Police	 18 	Diff	 -0.125 	Ave	 6.225 
+
+Police	 3 	Diff	 -0.625 	Ave	 6.225 
+
+Police	 17 	Diff	 -0.925 	Ave	 6.225 
+
+Police	 8 	Diff	 -1.225 	Ave	 6.225 
+
+Police	 16 	Diff	 -1.225 	Ave	 6.225 
+
+Police	 15 	Diff	 -1.425 	Ave	 6.225 
+
+Police	 11 	Diff	 -1.625 	Ave	 6.225 
+
+Police	 12 	Diff	 -2.225 	Ave	 6.225 
+
+Police	 19 	Diff	 -2.825 	Ave	 6.225 
+
+Police	 6 	Diff	 -3.725 	Ave	 6.225 
+
+Police	 14 	Diff	 -3.725 	Ave	 6.225 
+
+Police	 10 	Diff	 -4.625 	Ave	 6.225 
+
+Sum Distance:  1032.1988097
