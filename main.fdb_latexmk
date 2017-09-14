@@ -1,0 +1,16 @@
+# Fdb version 3
+["latex"] 1505387402 "main.tex" "main.dvi" "main" 1505387402
+  "/usr/local/texlive/2017/texmf-dist/fonts/map/fontname/texfonts.map" 1480098670 3287 e6b82fe08f5336d4d5ebc73fb1152e87 ""
+  "/usr/local/texlive/2017/texmf-dist/fonts/tfm/public/cm/cmr12.tfm" 1480098701 1288 655e228510b4c2a1abe905c368440826 ""
+  "/usr/local/texlive/2017/texmf-dist/tex/generic/ifxetex/ifxetex.sty" 1480098815 1458 43ab4710dc82f3edeabecd0d099626b2 ""
+  "/usr/local/texlive/2017/texmf-dist/tex/latex/base/article.cls" 1480098821 19821 310da678527a7dfe2a02c88af38079b7 ""
+  "/usr/local/texlive/2017/texmf-dist/tex/latex/base/size12.clo" 1480098821 8303 1d67e16498f00f63da792fab169302fc ""
+  "/usr/local/texlive/2017/texmf-dist/web2c/texmf.cnf" 1494087824 32646 eadc4ca26cdbe7105ac7c593aa8c4f72 ""
+  "/usr/local/texlive/2017/texmf-var/web2c/pdftex/latex.fmt" 1495593496 4129530 100bcec0d3b9ae9e2515b234bc2a0fc5 ""
+  "/usr/local/texlive/2017/texmf.cnf" 1495593465 577 2b71d4d888f9e5560b2e99985915a9fa ""
+  "cumcmthesis.cls" 1505387279 21224 9ba20944ff08beaf5ad9390501366ad0 ""
+  "main.aux" 1505387359 8 a94a2480d3289e625eea47cd1b285758 ""
+  "main.tex" 1505387279 44941 a559f17153dfc2a3a785c6cd2e68d54d ""
+  (generated)
+  "main.log"
+  "main.dvi"
