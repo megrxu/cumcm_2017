@@ -7,12 +7,12 @@
   \baominghao{4321}
   \schoolname{浙江大学}
   \membera{刘昊洋}
-  \memberb{曹子浩}
-  \memberc{徐国瑞}
+  \memberb{徐国瑞}
+  \memberc{曹子浩}
   \supervisor{谈之奕}
   \yearinput{2017}
   \monthinput{09}
-  \dayinput{18}
+  \dayinput{17}
 
 \begin{document}
 
@@ -20,41 +20,609 @@
 % 摘要
 \begin{abstract}
 
+  本文在充分了解了CT系统工作原理的前提下，设计了对CT系统相关参数的标定方法，并利用标定后的CT系统对未知介质进行了图像重建与测量，最后分析了参数标定的准确性与稳定性，在此基础上改进了标定模板，对CT系统的优化提出了一些建议。
 
-  \keywords{图像重建 \quad  投影 \quad}
+  对于CT系统参数的标定，我们分成三个部分来考虑，即要得出CT系统旋转中心的位置、探测器单元之间的距离以及该CT系统使用的X射线的180个方向。为此我们根据附件二的数据得出了标准模板的扫描图像，并找到其与模板上均匀介质图形的内在联系，进而求出探测器单元的距离为0.2761 mm。进一步，通过比较探测器单元接收到的投影与原像的长度之比，可以得出旋转角的变化趋势，即从$29.4056^\circ$到$208.3340^\circ$，以$0.9996^\circ$为间隔等间距变化。最后，为了确定旋转中心的位置，我们运用几何关系同时结合旋转方向以及模板的初始位置，得出CT系统的旋转中心位置为$(-8.8439, -6.6130)$（单位：mm），以正方形托盘中心为原点，以椭圆长轴为$y$轴，短轴为$x$轴。
+
+  针对图像重建的问题，我们联系数学中关于二维图像的Radon变换来解决这次的问题，并简要证明了CT系统成像中的扫描操作实际上是对于样品二维吸收率分布的某一方向的投影。结合中心切片定理，得到Radon逆变换的算法步骤，并且使用相应的MATLAB函数及前面标定的参数，得到一个图像重建的通用方法。使用该方法，我们较为准确地重建了附件2和附件5中未知样品的吸收率分布，并进一步得到了要求的10个点的吸收率。具体的吸收率可见附录的表格 \ref{xiuzlv}。
+
+  对于设计新模板的问题，我们首先分析了之前处理模板中遇到的一些困难和缺陷，即处理边界时交叉的部分会导致边界提取较大的误差。基于这一点，我们设计了空心圆的样品模板，规避了外围边界交叉的问题，能够更简单快速地标定相应参数，优化了边界提取效果，从而达到预期的效果。
+
+  最后，本文分析了现有模型的缺陷，并提出了进一步改进的方向。
+
+  \keywords{图像重建 \quad  Radon变换 \quad 中心切片定理 \quad 三次样条插值 \quad}
 \end{abstract}
 
 \section{问题重述}
 
+  本题要求我们解决的问题大致可以概括为：
   \begin{enumerate}
-    \item 为该市中心城区A各交巡警服务平台分配管辖范围，使其在所管辖的范围内出现突发事件时，尽量能在3分钟内有交巡警到达事发地。
+    \item 对现有的CT系统的有关参数，如旋转中心位置，探测器单元距离以及X射线方向等参数进行标定。标定的方法是根据其对一个较为标准的模板的测量数据来求出对应参数。
+    \item 用已经明确参数的CT系统来对给出的未知介质进行测量。对所得的扫描结果进行图像重建，得出两种未知介质的相关性质，位置、几何形状和吸收率等信息，并给出指定点的吸收强度。
+    \item 分析上述CT系统参数标定的精度以及稳定性，同时改进模板，以提高标定精度及稳定性。
   \end{enumerate}
 
 \section{问题分析}
+
+  我们先对材料中叙述的CT的实现原理进行了程序模拟，以便能得到一个较为直观的认识。程序模拟的结果表明，如果我们的旋转中心使用椭圆中心，每次逆时针方向旋转$1^{\circ}$，所得的扫描结果如图 \ref{std} 所示。同时为了直观对比，也导出实际的结果，如图 \ref{act}。
+
+  \begin{figure}[!htbp]
+    \begin{minipage}[t]{0.5\linewidth}
+      \centering
+      \includegraphics[width=.3\textwidth]{std}
+      \caption{无偏差扫描结果灰度图}
+      \label{std}
+    \end{minipage}
+    \begin{minipage}[t]{0.5\linewidth}
+      \centering
+      \includegraphics[width=.3\textwidth]{act}
+      \caption{实际扫描结果灰度图}
+      \label{act}
+    \end{minipage}
+  \end{figure}
+
+  问题一要求我们根据标准均匀介质模板的测量数据来求出CT系统的三个参数，即旋转中心，探测器单元距离以及X射线方向。
+
+  首先，根据附件二，我们得出了测量数据对应的扫描结果的大致图形轮廓，在图形中找到椭圆长轴对应的像，以及其对应的探测器单元。由于已知椭圆长轴的实际长度，以及探测器单元在探测器平面上是等距分布的，那么根据长轴的像对应的探测器单元个数，就可以得到探测器单元之间的距离。对于旋转中心，考虑模板中相对特殊的两个点，即圆心以及椭圆中心，同时考虑它们与旋转中心连接的线段长度。由于平行入射的X射线垂直于探测器平面，那么这相当于将正方形托盘上的二维待测介质投影到探测器平面上，那么也会将上述两条线段投影在探测器平面上。由于在前面已经得出了探测器单元之间的距离，所以可以由投影所在的探测器单元区间知道投影的长度。由于旋转中心在旋转过程中在探测器面板上的投影位置保持不变，而投影的长度却与旋转角度具有正弦关系，通过附件二中测量数据对应的扫描结果，我们可以得到圆心与椭圆中心的投影轨迹，进行正弦函数拟合后可以得到两个正弦函数的振幅。有投影的定义可以知道这两个振幅与圆心和椭圆中心到旋转中心的线段长度对应相等。分别以圆心以及椭圆中心为圆心，以这两个长度作为半径作圆，两圆交点便可能是旋转中心的位置。再结合旋转方向为逆时针以及正弦函数的初相位，便可唯一确定旋转中心的位置。对于X射线的180个方向，我们根据上面得出的圆心以及椭圆中心的轨迹对应点之间距离与两点连线之距离的比值，此即为旋转角的余弦值，用反余弦函数得出旋转过的角度，就知道了X射线的方向。
+
+  对于问题二和问题三，所给的数据是该CT系统对于两个未知样本的扫描结果，我们需要借助上题中标定的参数，将扫描结果进行图像重建，得到未知样本的在正方形托盘中的位置、几何形状和吸收率等信息。分析可得，这个图像重建过程是借助二维图像在各个方向上的一维投影来进行重建的。联系到数学上的Radon变换，有一些比较成熟的图像重建方法可供我们参考。
+
 \section{模型假设}
+
+  根据材料和上述分析，我们做出以下假设：
+  \begin{enumerate}
+    \item CT系统的探测器平面与X射线方向完全垂直。
+    \item X射线认为是平行入射的，没有误差。
+    \item 测量出的X射线的吸收仅与样品的内部的吸收率有关，忽略折射散射等的影响。
+  \end{enumerate}
+
 \section{符号说明}
+  \begin{center}
+    \begin{longtable}{cc}
+      \toprule[1pt]
+      \makebox[0.3\textwidth][c]{符号} &
+      \makebox[0.4\textwidth][c]{意义} \\
+      \midrule[0.5pt]
+      $g(\rho, \theta)$                & 在 $\theta$ 方向上的投影                    \\
+      $f(x, y)$                        & 二维图像或吸收率二维分布                    \\
+      $r(x, y)$                        & 重建的图像或计算得吸收率二维分布            \\
+      $G(\omega, \theta)$              & $g(\rho, \theta)$ 关于 $\rho$ 的Fourier变换 \\
+      $F(u, v)$                        & 原图像的二维Fourier变换                     \\
+      \bottomrule[1pt]
+    \end{longtable}
+  \end{center}
+
 \section{建立模型与求解}
+
+  \subsection{CT系统的参数标定}
+    \subsubsection{扫描结果的处理}
+      附录二的每一列均记录了一个角度对应的吸收强度分布情况。对应的大拱形图样与小拱形图样分别由匀质的椭圆与圆产生，其边界的即为椭圆与圆投影的边界。三种典型的分布如图 \ref{fig:1} 所示。
+
+      \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=1\textwidth]{image}
+        \caption{吸收强度典型分布图}
+        \label{fig:1}
+      \end{figure}
+
+      观察到在边界处，图形的梯度较大。利用MATLAB中的gradient函数，求出列方向上的梯度如图 \ref{fig:2} 所示。
+
+      \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=1\textwidth]{image-1}
+        \caption{列方向梯度分布图}
+        \label{fig:2}
+      \end{figure}
+
+      则波峰与波谷所对应的点即为投影的边界点，且较大的波峰、波谷与较小的波峰、波谷一一对应着两个图样的上边界与下边界。求出波峰和波谷（MATLAB中findpeaks）。由于该函数会提取出所有的波峰，而其中部分波峰是由于两个图样相聚较近而产生的小峰值的干扰，编写 FindProperPeaks 寻找出较大的波峰，作为对应列的图样的边界点。由此，我们提取出了四条边界线，如图 \ref{fig:3} 所示。
+
+      \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=1\textwidth]{image-2}
+        \caption{边界提取结果}
+        \label{fig:3}
+      \end{figure}
+
+      观察到提取出的边界仍有少数点是偏离的。这是因为FindProperPeaks通过找出波峰的最大值、波峰的第二大值和波谷的最大值、波谷的第二大值来作为将求出的点分类到某一条曲线上的依据，而在边界曲线交叉的时候，会产生波峰波谷相消的现象，使该判断出现问题，需要对曲线进行进一步的降噪。去除偏离点后，用三次样条插值\cite{uuvi}实现对缺少点的补全，可以求圆心、椭圆中心的轨迹如图 \ref{fig:4} 所示。
+
+      \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=1\textwidth]{image-3}
+        \caption{降噪后的圆心和椭圆中心轨迹}
+        \label{fig:4}
+      \end{figure}
+
+    \subsubsection{180个方向的确定}
+      以探测器平面为参照系，则圆心、椭圆中心与旋转中心旋转过程可用图 \ref{geo} 表示。
+
+      \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=.8\textwidth]{geo}
+        \caption{旋转过程示意图}
+        \label{geo}
+      \end{figure}
+
+      其中$a$为椭圆中心，$o$为旋转中心，$b$为圆心，当$oab$旋转$\theta$角成为$oa'b$'时，由$\triangle {a'cb'}$的几何关系知：$\cos\theta={cb'}/{a'b'}$。其中$cb'=A'B'$为椭圆中心到圆心的投影距离，可由之前获得的轨迹读出。$a'b'$为模板上椭圆中心到圆心的距离，为45 mm。由此，根据$\theta= \arccos({cb'}/{a'b'})$可求出180个方向。所得数据图如图 \ref{theta} 所示。
+
+
+      \begin{figure}[!htbp]
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=.8\textwidth]{theta}
+          \caption{}
+          \label{theta}
+        \end{minipage}
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=.8\textwidth]{angles}
+          \caption{}
+          \label{angles}
+        \end{minipage}
+      \end{figure}
+
+      观察到整体趋势呈线性，但在140~160处线性度较差。对$\theta$关于$cb'$求微分，有
+
+      \begin{equation}
+        d\theta=\frac{-1}{\sqrt{(1-(\frac{cb'}{a'b'})^2)}}d(cb')
+      \end{equation}
+      可见$cb'$接近$a'b'$时，$\theta$对于$cb'$较敏感，较小的$cb'$波动会造成较大的$\theta$波动。去掉140至160处的点，对数据进行线性拟合，如图 \ref{angles} 所示。
+
+      \begin{equation}
+        y = 0.9996x + 28.729,R² = 0.9999
+      \end{equation}
+
+      可以认为角度是线性变化的，每次转过的角度为0.9996度。
+
+    \subsubsection{探测单元的距离的确定}
+
+      我们首先根据附件二的吸收强度数据，得出扫描结果的大致图形轮廓，如图 \ref{act}。X射线所成像的最长部分应为椭圆长轴长度（此时X射线方向与长轴垂直）。从附件二中我们可以读出这个像所处的探测器单位元区间（即对应的探测器单位元数目），与此同时，从图 \ref{act} 中可知椭圆长轴的实际长度。根据探测器单位元在探测器平面上等距分布，我们就可以得出探测器单位元之间的实际距离。
+
+      最终计算得，探测器单位之间得距离为 0.2761 mm。
+
+    \subsubsection{旋转中心的确定}
+
+      椭圆中心$O_2$与圆心$O_1$均绕转动中心C做半径为$r_2$与$r_1$的圆周运动（如图 \ref{yuan2}）。若以圆心为参照系，旋转中心绕$O_1$做半径为$r_1$的圆周运动；若以椭圆中心$O_2$为参照系，旋转中心绕$O_2$做半径为$r_2$的圆周运动。旋转中心必然满足同时在圆$O_2$、$O_1$上，因此旋转中心一定为两圆两交点中的一个。（如图 \ref{yuan}）
+
+      \begin{figure}[!htbp]
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=.8\textwidth]{yuan2}
+          \caption{}
+          \label{yuan2}
+        \end{minipage}
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=.8\textwidth]{yuan}
+          \caption{}
+          \label{yuan}
+        \end{minipage}
+      \end{figure}
+
+      利用图 \ref{fig:4} 圆心和椭圆中心的轨迹可以求得 $r_1$与$r_2$。由之前得到的180个位置可知，探测器每次旋转0.9996度，共旋转了180次，可以认为图 \ref{fig:4} 中的轨迹为正弦函数的半个周期。因此可以求出两轨迹的幅值，即为半径$r_1$、$r_2$。以椭圆中心$O_2$为原点，$O_2$、$O_1$连线沿$O_2$至$O_1$方向为$x$轴，解出候选旋转点坐标为$(-8.8439, -6.6130),(-8.8439, 6.6130)$。若以像素作为单位，则约为$(-32,-24)$与$(-32,24)$。结合图 \ref{fig:4} 中圆心和椭圆中心的轨迹和图 \ref{angles}，两个正弦轨迹的初相约为-29.4度。因此可以判断出旋转中心的位置为$(-8.8439, -6.6130)$或用像素表示为$(-32,-24)$。其位置如图 \ref{rotate}。
+
+      \begin{figure}[!htbp]
+        \centering
+        \includegraphics[width=.8\textwidth]{rotational_center}
+        \caption{旋转中心}
+        \label{rotate}
+      \end{figure}
+
+    \subsubsection{计算结果的验证}
+
+      自此，我们得到了该CT系统进行扫描的几个基本参数：方向，探测器距离，旋转中心。可以使用这些参数对模板进行模拟扫描，将扫描结果与实际的结果作对比，以便验证我们的结果是正确的。加入参数的模拟扫描结果见图 \ref{test_std}，实际的扫描结果见 \ref{test_act}。
+
+      \begin{figure}[!htbp]
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=.3\textwidth]{test_std}
+          \caption{加入参数的模拟扫描结果}
+          \label{test_std}
+        \end{minipage}
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=.3\textwidth]{test_act}
+          \caption{实际的扫描结果}
+          \label{test_act}
+        \end{minipage}
+      \end{figure}
+
+      可以看出，加入参数的扫描结果与实际结果基本一致，证明我们所得到的参数的正确性。
+
+  \subsection{从二维图像的一维投影进行图像重建}
+
+    \subsubsection{Radon变换与CT系统成像}
+
+      \paragraph{CT系统成像的数学推导}
+
+        根据材料，CT系统在多个方向上，使用X射线对样品进行穿透，之后在每个方向上计算X射线的吸收程度，得到一个一维的扫描结果。
+
+        然而，由于我们仅能考察最终的探测器收到的信息，因此无法对这个方向上的吸收率分布有所认识，得到的扫描结果是一个累积结果。接下来我们将证明，这个吸收率的累积结果是对于该样品吸收率分布在该方向上的积分。
+
+        X射线在穿透厚度为$x_0$时，最终的射线强度为
+        \begin{equation}
+          I = I_0 \times e^{-\mu x_0}
+        \end{equation}
+
+        由此，我们可以得到穿过不均匀材料的射线强度：
+
+        \begin{equation}
+          I = I_0 \times e^{-\int_0^{x_0}{\mu(x)dx}}
+        \end{equation}
+
+        其中$\mu(x)$为该材料的吸收率分布。这里可以看到，如果我们按照最终的吸收结果所推得的吸收率$\mu_{0}$，将是$\mu(x)$在入射方向上的积分。
+
+        \begin{equation}
+          \mu_{0} = \int_0^{x_0}{\mu(x)dx}
+        \end{equation}
+
+        即证得在入射方向上吸收率的累积效果就是在该方向上的积分。
+
+      \paragraph{Radon变换的描述}
+
+        此外，我们再考察Radon变换。
+        直角坐标系中的一条直线可以用其法线描述为$x\cos\theta + y\sin\theta = \rho$。当$\theta$保持一定时，表现的是一簇平行的曲线。对二维图像$f(x, y)$的Radon变换是得到一个关于$\rho$和$\theta$表达式，记为$g(\rho, \theta)$。
+        $g(\rho, \theta)$，即投影剖面上的任意一点$(\rho_j, \theta_k)$的值由$f(x, y)$沿直线$x\cos\theta_k + y\sin\theta_k = \rho_j$的积分确定。即可得到$g(\rho, \theta)$的表达式\cite{uuzi}：
+
+        \begin{equation}
+          g(\rho, \theta) = \int_{-\infty}^{\infty}\int_{-\infty}^{\infty}f(x, y)\delta(x\cos\theta + y\sin\theta - \rho)dxdy
+        \end{equation}
+
+        在该表达式上，使用了冲激函数的特性，保证了这个积分仅在当前直线上进行，也就是沿该方向上的投影。
+
+      \paragraph{Radon变换与CT系统成像}
+
+        由上，我们能够比较清楚地发现所给材料中的CT系统成像实际上使用的就是Radon变换。样品吸收率的二维分布对应Radon变换中的二维图像$f(x,y)$，所得的扫描结果对应Radon变换中的投影结果。
+        因此，我们之后将样品吸收率的二维分布记为$f(x,y)$，它与二维图像是等价的。
+
+    \subsubsection{中心切片定理和滤波反投影}
+      通过查阅资料，我们找到了一个与Radon变换十分相关的定理，中心切片定理（也叫做Fourier切片定理）。该定理表明，一个投影的Fourier变换，是得到该投影的区域的二维Fourier变换在该方向上的切片。即\cite{yixt}
+      \begin{equation}
+        G(\omega, \theta) = [F(u, v)]_{u = \omega \cos \theta, v = \omega \sin \theta} = F(\omega \cos \theta, \omega \sin \theta)
+      \end{equation}
+
+      通过这个定理，我们可以比较方便地在频域内进行工作，并且推导出频域内的原二维图像（即$f(x, y)$）的表达式：
+
+      \begin{equation}
+        f(x, y) = \int_0^{\pi}\Bigg[\int_{-\infty}^{+\infty}|\omega|G(\omega, \theta)e^{j2\pi\omega\rho}d\omega\Bigg]
+      \end{equation}
+
+      观察到，在计算任意一点$(x, y)$的图像值（也就是吸收率）的时候，内部表达式计算的其实是一个加了滤波函数的Fourier逆变换。
+
+      这样，我们可以得到基本的求解Radon逆变换的步骤：
+      \begin{enumerate}
+        \item 计算180个方向的投影的一维Fourier变换。
+        \item 用滤波函数$|\omega|$乘以步骤1所得结果。同时，为了得到更好的效果，在这一步一般还需加入一个窗口函数的处理。
+        \item 得到第 2 步导致的每个滤波后的变换的一维Fourier逆变换。
+        \item 对第 3 步得到的所有一维逆变换离散求和，得到 $f(x, y)$。
+      \end{enumerate}
+
+      由于我们的数据均为离散的，因此Fourier变换与逆变换均使用FFT算法实现。
+
+    \subsubsection{基于Radon逆变换的图像重建}
+
+      我们使用MATLAB中的iradon函数进行Radon逆变换。它接受四个参数，投影数据，旋转角度，重建图像的内插方法和上一部分所述的滤波器。旋转角度和初相位在前面的篇幅中已经得到。为了避免重建图像输出到矩阵之外，我们对投影数据进行了扩展，相当于在512个探测器单元的两侧各加了128个检测不到吸收的探测器。这样就能完整地得到Radon逆变换之后地图像。
+
+      之后，我们对处理模板投影数据得到的图像进行二次标定。标定长度放缩比，灰度放缩比，以及位置偏移量。这样就得到了针对该CT系统的图像重建通用方法，可以进行进一步的工作。
+
+    \subsubsection{最终结果}
+
+      图 \ref{isjm2}，图 \ref{isjm3}分别是使用上述通用方法重建的切片图。注意，由于有的样品的相对吸收率大于1，无法直接转化为灰度图，均进行了归一化处理。因此这里的不同样品之间的吸收率无法通过图像本身进行比较，准确的吸收率结果保存在其他文件中。
+
+      \begin{figure}[!htbp]
+        % \begin{minipage}[t]{0.3\linewidth}
+        %   \centering
+        %   \includegraphics[width=1\textwidth]{mobj}
+        %   \caption{模板的重建}
+        %   \label{isjm1}
+        % \end{minipage}
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=1\textwidth]{fujm3}
+          \caption{附件二的重建}
+          \label{isjm2}
+        \end{minipage}
+        \begin{minipage}[t]{0.5\linewidth}
+          \centering
+          \includegraphics[width=1\textwidth]{fujm5}
+          \caption{附件五的重建}
+          \label{isjm3}
+        \end{minipage}
+      \end{figure}
+
+      另外，问题二和问题三要求的两个未知样品10个点的吸收率列入表 \ref{xiuzlv}。
+
+      \begin{center}
+        \label{xiuzlv}
+        \begin{longtable}{|c|c|c|c|}
+          \hline
+          \multicolumn{2}{|c|}{位置} & \multicolumn{2}{c|}{吸收率} \\ \hline
+          x    & y    & 附件3的样品 & 附件5的样品 \\ \hline
+          10   & 18   & 0           & 0.048977    \\ \hline
+          34.5 & 25   & 0.99913     & 2.817       \\ \hline
+          43.5 & 33   & 0           & 7.2033      \\ \hline
+          45   & 75.5 & 1.2006      & 0           \\ \hline
+          48.5 & 55.5 & 1.0686      & 0.17114     \\ \hline
+          50   & 75.5 & 1.5055      & 3.3366      \\ \hline
+          56   & 76.5 & 1.3077      & 6.1834      \\ \hline
+          65.5 & 37   & 0           & 0           \\ \hline
+          79.5 & 18   & 0           & 7.3756      \\ \hline
+          98.5 & 43.5 & 0           & 0.047672    \\ \hline
+        \end{longtable}
+      \end{center}
+
+  \subsection{参数标定的精度和稳定性}
+
+    利用问题一中获得的参数标定对模板进行复原。图 \ref{mobj}，图 \ref{ori}，图 \ref{com}分别展示了复原后的图像，原图以及两图相减后“剩余”的图像。
+    \begin{figure}[!htbp]
+      \begin{minipage}[t]{0.3\linewidth}
+        \centering
+        \includegraphics[width=1\textwidth]{shengcheng}
+        \caption{复原图像}
+        \label{mobj}
+      \end{minipage}
+      \begin{minipage}[t]{0.3\linewidth}
+        \centering
+        \includegraphics[width=1\textwidth]{yuanshi}
+        \caption{原图}
+        \label{ori}
+      \end{minipage}
+      \begin{minipage}[t]{0.3\linewidth}
+        \centering
+        \includegraphics[width=1\textwidth]{bianjie}
+        \caption{相减}
+        \label{com}
+      \end{minipage}
+    \end{figure}
+
+    可见复原整体是理想的，但在边缘处会出现残余。定义如下指标来定量衡量精确性：
+
+
+    \begin{equation}
+      \eta =\frac{\large\int_{-\infty}^{\infty}\large\int_{-\infty}^{\infty}{|f(x, y) - r(x, y)|}dxdy}{\large\int_{-\infty}^{\infty}\large\int_{-\infty}^{\infty}f(x, y)dxdy}
+    \end{equation}
+
+    其直观上的意义是两者相差的剩余部分的吸收率之和占原图的吸收率之和的的百分比，计算的到$\eta =  0.3474\%$。该复原较为理想。
+
+    观察到复原后的图像边缘明显比原图光滑，这是因为附件2的信息量更大，复原过程中会自动地补全粗糙的边界。从复原图与原图相差的剩余部分明显可以看出这样的边界，这是$\eta$值产生的原因之一。
+    另外的误差可能来源于图像边界提取。在边界处理时，去掉了一些偏离曲线的点。这些点事实上也是边界点，但被分类函数错误地分到了其它曲线上。若能改善边界的特征，则可以提高本部分的精度。此外由于数据只取4位有效数字，复原过程中也会产生截断误差。另外由于数据的离散性，在旋转等操作中，也会造成一定的误差。
+
+    “一个数学模型成为稳定的，是指即使这个模型不完全准确，由其导出的结果也是正确的。”\cite{moxk}在对这个CT系统标定过程中，我们在测量角度和距离的时候都用了较多的近似，也意味着建立的模型是不完全准确的，但是从图 \ref{test_std} 和 图 \ref{test_act} 中根据参数复原和原图的比较中可以看到，我们最终得到的是基本正确的结果，也印证了这个模型是稳定的。
+
+
+  \subsection{设计新模板}
+
+    我们根据之前处理模板投影数据的经验，发现了以下几个产生误差的原因：
+    \begin{enumerate}
+      \item 对于椭圆与圆组合的模板，其扫描图像由于在某些角度有交叉的部分，相互干扰，使得直接分离图像变得较为困难。
+      \item 边界提取上，由于交叉点的存在，通过梯度峰值提取出的边界中不理想以及偏移的像素点会较多。
+      \item 对提取后的边界降噪处理时，由于偏移的像素点会较多，且偏移量不明显，会去掉较多的数据点。
+    \end{enumerate}
+
+    同时，为了合理标定参数，我们又必须要求有下面的几个点来标定所需的参数：
+    \begin{enumerate}
+      \item 通过线段或者点的多个方向的投影来确定旋转的角度。
+      \item 通过至少两个点的投影所形成的正弦函数曲线的振幅确定旋转的位置。
+      \item 通过至少一个长度对应关系确定探测器单元之间的距离。
+    \end{enumerate}
+    因此，为了规避以上的问题，并且同样能标定出足够的参数，我们设计了新的空心圆模板，如图 \ref{ksxb} 所示。
+
+    对其扫描图像进行模拟得到图 \ref{xbscmn}。利用之前边界提取的算法，提取出四条边界如图 \ref{fig1}，图 \ref{fig2}，图 \ref{fig3}，图 \ref{fig4} 所示：
+
+    \begin{figure}[!htbp]
+      \begin{minipage}[t]{0.5\linewidth}
+        \centering
+        \includegraphics[width=1\textwidth]{tututu}
+        \caption{空心圆的模板}
+        \label{ksxb}
+      \end{minipage}
+      \begin{minipage}[t]{0.5\linewidth}
+        \centering
+        \includegraphics[width=.3\textwidth]{new_model}
+        \caption{新模板的扫描结果}
+        \label{xbscmn}
+      \end{minipage}
+    \end{figure}
+
+    \begin{figure}[!htbp]
+      \begin{minipage}[t]{1.5in}
+        \centering
+        \includegraphics[width=1\textwidth]{1}
+        \caption{边界1}
+        \label{fig1}
+      \end{minipage}
+      \begin{minipage}[t]{1.5in}
+        \centering
+        \includegraphics[width=1\textwidth]{2}
+        \caption{边界2}
+        \label{fig2}
+      \end{minipage}
+      \begin{minipage}[t]{1.5in}
+        \centering
+        \includegraphics[width=1\textwidth]{3}
+        \caption{边界3}
+        \label{fig3}
+      \end{minipage}
+      \begin{minipage}[t]{1.5in}
+        \centering
+        \includegraphics[width=1\textwidth]{4}
+        \caption{边界4}
+        \label{fig4}
+      \end{minipage}
+    \end{figure}
+
+    可见，由于新的空心圆模板的两条正弦轨迹并不会相交产生干扰，基于梯度极值点的边界判别效果会提高，尤其体现在外侧正弦曲线组上（图 \ref{fig1} 图和 \ref{fig3}）。而内侧空心圆部分产生的正弦曲线组尽管有一些噪点，但这些噪点具有数量少且远离趋势线的特点，有利于进一步降噪效率的提高。
+
+    事实上，鉴于外侧正弦曲线组边界提取几乎无噪点，可以直接基于该曲线，在不删减点的情况下利用三角函数的相关特性进行180个方位的计算，提高这部分的精度。而内侧空心圆部分产生的正弦曲线组则可以在降噪插值后计算内侧空心圆圆心的轨迹曲线，在与大圆圆心轨迹曲线对比后用之前提到的方法求出旋转中心的位置与探测器单元之间的距离。
+
+
 \section{模型的评价及改进}
-\section{参考文献}
+
+  \subsection{对于模型的评价}
+
+    针对问题一，我们通过观察数据的扫描图像以及寻找图形之间的几何关系，完成了CT系统相关参数的标定。这其中运用了很多几何以及三角函数的知识，将一个原本需要处理大量数据的问题简洁明了地转化成直观形象的问题，并且给出了合理的解释与解答。
+
+    针对问题二与问题三，联想到图像重建的问题，我们找到数学中关于二维图像的Radon变换来解决这次的问题，并简要证明了CT系统成像中的扫描操作实际上是对于样品二维吸收率分布的某一方向的投影。结合中心切片定理，得到Radon逆变换的算法步骤，使用该方法，我们较为准确且较为简化地重建了附件2和附件5中未知样品的吸收率分布，并进一步得到了要求的10个点的吸收率。图像重建的结果也表明使用Radon变换的方法效果极佳。
+
+    针对问题四，我们首先分析了之前处理模板中遇到的一些困难和缺陷，即处理边界时交叉的部分会导致边界提取较大的误差。基于这一点，我们设计了空心圆的样品模板，规避了外围边界交叉的问题，能够更简单快速地标定相应参数，从而达到更好的效果。
 
 
+  \subsection{对于模型的改进}
+  本文中的模型也具有一定的局限性，比如现实中很难保证X射线始终与探测器平面垂直，X射线的强度各处始终相同、各个探测器单元的敏感程度完全相同，实际待测对象对X存在折射和反射现象，扫描图像存在噪声等。这些问题可以通过对不同区域分别分析，对不同探测器单元赋以权重，对扫描图像降噪等方法进行进一步解决，本文不再赘述。
 
-  \newpage
-  \appendix
+
+    % \section{参考文献}
+    \begin{thebibliography}{9}
+      \bibitem{uuzi}Rafael C. Gonzalez, 数字图像处理[M]. 北京:电子工业出版社, 2014. 104-111
+      \bibitem{uuvi}John H. Mathews, Kurtis D. Fink. 数值方法[M]. 北京:电子工业出版社, 2010. 154-164
+      \bibitem{yixt}高上凯. 医学成像系统[M]. 北京:清华大学出版社有限公司, 2000. 46-50
+      \bibitem{moxk}Meerschaert, M. M. 数学建模与方法分析[M]. 北京:机械工业出版社, 2015. 9
+    \end{thebibliography}
+
+    \newpage
+    \appendix
 \section{}
   \subsection{apps.py}
-    \lstinputlisting[language=Python]{code/apps.py}
-
+    在本项目中的常用函数的编写。
+    \lstinputlisting[language=Python]{code/Python/apps.py}
   \subsection{init.py}
-    \lstinputlisting[language=Python]{code/init.py}
+    导入附件中的数据，并进行初步的处理。
+    \lstinputlisting[language=Python]{code/Python/init.py}
+  \subsection{std.py}
+    模拟过程，对模板进行无偏差的CT成像。
+    \lstinputlisting[language=Python]{code/Python/std.py}
+  \subsection{ellipse.py}
+    对模板所成实际的像中的椭圆部分进行处理，得到长轴和短轴的长度数据和坐标数据。
+    \lstinputlisting[language=Python]{code/Python/ellipse.py}
+  \subsection{angles.py}
+    根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=Python]{code/Python/angles.py}
+  \subsection{amp\_acquire.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/amp_acquire.m}
+  \subsection{edge\_acquire.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/edge_acquire.m}
+  \subsection{FindProperPeaks.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/FindProperPeaks.m}
+  \subsection{FlteringFunc.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/FlteringFunc.m}
+  \subsection{getParas.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/getParas.m}
+  \subsection{GetPeaks.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/GetPeaks.m}
+  \subsection{getResult.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/getResult.m}
+  \subsection{interpolation\_of\_round\_ellipse.m}
+    % 根据几何关系对180个方向的角度进行标定。
+    \lstinputlisting[language=MATLAB]{code/MATLAB/interpolation_of_round_ellipse.m}
 
-    \subsection{std.py}
-    \lstinputlisting[language=Python]{code/std.py}
-
-    \subsection{ellipse.py}
-    \lstinputlisting[language=Python]{code/ellipse.py}
-
-    \subsection{angles.py}
-    \lstinputlisting[language=Python]{code/angles.py}
+\section{}
+  \subsection{arccos 数据值表}
+    注：下表为180个方向的arccos计算值，前行为修正前的原始值，后行为加入修正因子的修正值。
+    \begin{center}
+      \label{uujubn}
+      \small
+      \begin{longtable}{cccccccccc}
+        \hline
+        1        & 2        & 3        & 4        & 5        & 6        & 7        & 8        & 9        & 10       \\ \hline
+        0.88062  & 0.86202  & 0.86202  & 0.84961  & 0.83721  & 0.83101  & 0.81860  & 0.80620  & 0.79380  & 0.78760  \\
+        0.87117  & 0.85276  & 0.85276  & 0.84049  & 0.82822  & 0.82209  & 0.80982  & 0.79755  & 0.78528  & 0.77914  \\
+        \hline
+        11       & 12       & 13       & 14       & 15       & 16       & 17       & 18       & 19       & 20       \\
+        \hline
+        0.77519  & 0.76899  & 0.75039  & 0.73798  & 0.71938  & 0.71318  & 0.70698  & 0.69457  & 0.67597  & 0.66357  \\
+        0.76687  & 0.76074  & 0.74233  & 0.73006  & 0.71166  & 0.70552  & 0.69939  & 0.68712  & 0.66871  & 0.65644  \\
+        \hline
+        21       & 22       & 23       & 24       & 25       & 26       & 27       & 28       & 29       & 30       \\
+        \hline
+        0.65116  & 0.65116  & 0.64496  & 0.62636  & 0.60155  & 0.58295  & 0.57054  & 0.55814  & 0.53953  & 0.52093  \\
+        0.64417  & 0.64417  & 0.63804  & 0.61963  & 0.59509  & 0.57669  & 0.56442  & 0.55215  & 0.53374  & 0.51534  \\
+        \hline
+        31       & 32       & 33       & 34       & 35       & 36       & 37       & 38       & 39       & 40       \\
+        \hline
+        0.50853  & 0.49612  & 0.47752  & 0.46512  & 0.44651  & 0.43411  & 0.42171  & 0.40310  & 0.37829  & 0.36589  \\
+        0.50307  & 0.49080  & 0.47239  & 0.46012  & 0.44172  & 0.42945  & 0.41718  & 0.39877  & 0.37423  & 0.36196  \\
+        \hline
+        31       & 32       & 33       & 34       & 35       & 36       & 37       & 38       & 39       & 40       \\
+        \hline
+        0.50853  & 0.49612  & 0.47752  & 0.46512  & 0.44651  & 0.43411  & 0.42171  & 0.40310  & 0.37829  & 0.36589  \\
+        0.50307  & 0.49080  & 0.47239  & 0.46012  & 0.44172  & 0.42945  & 0.41718  & 0.39877  & 0.37423  & 0.36196  \\
+        \hline
+        41       & 42       & 43       & 44       & 45       & 46       & 47       & 48       & 49       & 50       \\
+        \hline
+        0.35349  & 0.33488  & 0.31628  & 0.30388  & 0.28527  & 0.26667  & 0.24806  & 0.22326  & 0.21085  & 0.19845  \\
+        0.34969  & 0.33129  & 0.31288  & 0.30061  & 0.28221  & 0.26380  & 0.24540  & 0.22086  & 0.20859  & 0.19632  \\
+        \hline
+        51       & 52       & 53       & 54       & 55       & 56       & 57       & 58       & 59       & 60       \\
+        \hline
+        0.18605  & 0.16124  & 0.14884  & 0.13023  & 0.11163  & 0.09302  & 0.06822  & 0.04341  & 0.02481  & 0.01240  \\
+        0.18405  & 0.15951  & 0.14724  & 0.12883  & 0.11043  & 0.09202  & 0.06748  & 0.04294  & 0.02454  & 0.01227  \\
+        \hline
+        61       & 62       & 63       & 64       & 65       & 66       & 67       & 68       & 69       & 70       \\
+        \hline
+        0.00000  & -0.01240 & -0.03101 & -0.04961 & -0.06202 & -0.08682 & -0.09922 & -0.11783 & -0.13643 & -0.15504 \\
+        0.00000  & -0.01227 & -0.03067 & -0.04908 & -0.06135 & -0.08589 & -0.09816 & -0.11656 & -0.13497 & -0.15337 \\
+        \hline
+        71       & 72       & 73       & 74       & 75       & 76       & 77       & 78       & 79       & 80       \\
+        \hline
+        -0.17364 & -0.18605 & -0.20465 & -0.21705 & -0.24186 & -0.25426 & -0.27287 & -0.29147 & -0.31008 & -0.32248 \\
+        -0.17178 & -0.18405 & -0.20245 & -0.21472 & -0.23926 & -0.25153 & -0.26994 & -0.28834 & -0.30675 & -0.31902 \\
+        \hline
+        81       & 82       & 83       & 84       & 85       & 86       & 87       & 88       & 89       & 90       \\
+        \hline
+        -0.34109 & -0.35969 & -0.37209 & -0.39070 & -0.40930 & -0.42171 & -0.44031 & -0.45271 & -0.46512 & -0.48372 \\
+        -0.33742 & -0.35583 & -0.36810 & -0.38650 & -0.40491 & -0.41718 & -0.43558 & -0.44785 & -0.46012 & -0.47853 \\
+        \hline
+        91       & 92       & 93       & 94       & 95       & 96       & 97       & 98       & 99       & 100      \\
+        \hline
+        -0.49612 & -0.51473 & -0.52713 & -0.54574 & -0.55814 & -0.57054 & -0.58915 & -0.60775 & -0.62016 & -0.62636 \\
+        -0.49080 & -0.50920 & -0.52147 & -0.53988 & -0.55215 & -0.56442 & -0.58282 & -0.60123 & -0.61350 & -0.61963 \\
+        \hline
+        101      & 102      & 103      & 104      & 105      & 106      & 107      & 108      & 109      & 110      \\
+        \hline
+        -0.63876 & -0.65736 & -0.66977 & -0.68217 & -0.69457 & -0.70698 & -0.71938 & -0.73178 & -0.74419 & -0.75659 \\
+        -0.63190 & -0.65031 & -0.66258 & -0.67485 & -0.68712 & -0.69939 & -0.71166 & -0.72393 & -0.73620 & -0.74847 \\
+        \hline
+        111      & 112      & 113      & 114      & 115      & 116      & 117      & 118      & 119      & 120      \\
+        \hline
+        -0.76899 & -0.77519 & -0.79380 & -0.80000 & -0.81860 & -0.81860 & -0.83101 & -0.84341 & -0.84961 & -0.86202 \\
+        -0.76074 & -0.76687 & -0.78528 & -0.79141 & -0.80982 & -0.80982 & -0.82209 & -0.83436 & -0.84049 & -0.85276 \\
+        \hline
+        121      & 122      & 123      & 124      & 125      & 126      & 127      & 128      & 129      & 130      \\
+        \hline
+        -0.86822 & -0.88062 & -0.88682 & -0.89922 & -0.90543 & -0.91163 & -0.91783 & -0.92403 & -0.93023 & -0.93643 \\
+        -0.85890 & -0.87117 & -0.87730 & -0.88957 & -0.89571 & -0.90184 & -0.90798 & -0.91411 & -0.92025 & -0.92638 \\
+        \hline
+        131      & 132      & 133      & 134      & 135      & 136      & 137      & 138      & 139      & 140      \\
+        \hline
+        -0.94264 & -0.95504 & -0.96124 & -0.96124 & -0.96744 & -0.96744 & -0.97984 & -0.97984 & -0.98605 & -0.99225 \\
+        -0.93252 & -0.94479 & -0.95092 & -0.95092 & -0.95706 & -0.95706 & -0.96933 & -0.96933 & -0.97546 & -0.98160 \\
+        \hline
+        141      & 142      & 143      & 144      & 145      & 146      & 147      & 148      & 149      & 150      \\
+        \hline
+        -0.99225 & -0.99225 & -0.99845 & -1.00465 & -1.00465 & -1.00465 & -1.01085 & -1.00465 & -1.00465 & -1.01085 \\
+        -0.98160 & -0.98160 & -0.98773 & -0.99387 & -0.99387 & -0.99387 & -1.00000 & -0.99387 & -0.99387 & -1.00000 \\
+        \hline
+        151      & 152      & 153      & 154      & 155      & 156      & 157      & 158      & 159      & 160      \\
+        \hline
+        -1.01085 & -1.01085 & -1.01085 & -1.00465 & -1.01085 & -1.00465 & -1.00465 & -0.99845 & -1.00465 & -0.99845 \\
+        -1.00000 & -1.00000 & -1.00000 & -0.99387 & -1.00000 & -0.99387 & -0.99387 & -0.98773 & -0.99387 & -0.98773 \\
+        \hline
+        161      & 162      & 163      & 164      & 165      & 166      & 167      & 168      & 169      & 170      \\
+        \hline
+        -0.99225 & -0.99225 & -0.98605 & -0.98605 & -0.97984 & -0.97364 & -0.97364 & -0.96744 & -0.96124 & -0.95504 \\
+        -0.98160 & -0.98160 & -0.97546 & -0.97546 & -0.96933 & -0.96319 & -0.96319 & -0.95706 & -0.95092 & -0.94479 \\
+        \hline
+        171      & 172      & 173      & 174      & 175      & 176      & 177      & 178      & 179      & 180      \\
+        \hline
+        -0.94884 & -0.94264 & -0.93643 & -0.93643 & -0.92403 & -0.91783 & -0.90543 & -0.89922 & -0.89302 & -0.88682 \\
+        -0.93865 & -0.93252 & -0.92638 & -0.92638 & -0.91411 & -0.90798 & -0.89571 & -0.88957 & -0.88344 & -0.87730
+      \end{longtable}
+    \end{center}
 
 \end{document}

@@ -1,0 +1,2 @@
+1、csv文件与xlsx文件是运行所需文件。
+2、interpolation_of_round_ellipse.m与edge_acquire.m程序可生成多个曲线，生成时需要将对应注释改为代码并去掉对应的原有的代码
